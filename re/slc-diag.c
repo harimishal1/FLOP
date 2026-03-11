@@ -65,10 +65,10 @@ int main()
     }
     memset(evict_buf, 0xAA, max_evict); // fault in all pages
 
-    printf("=== dc civac flush depth diagnostic (M3 Max, core %d) ===\n\n", CORE_ID);
+    printf("dc civac flush depth diagnostic (M3 Max, core %d)\n\n", CORE_ID);
 
     // Test 1: Single page after dc civac + varying eviction
-    printf("--- Test 1: Single page timing after dc civac + eviction ---\n");
+    printf("Test 1: Single page timing after dc civac + eviction \n");
     printf("%8s  %12s  (median of 10 trials)\n", "Evict MB", "Access cycles");
 
     for (int si = 0; si < num_sizes; si++)
@@ -117,13 +117,13 @@ int main()
     }
 
     // Test 2: Full channel (256 pages) after dc civac + best eviction
-    printf("\n--- Test 2: Channel page timings after dc civac (no eviction) ---\n");
-    printf("Flushing 256 channel pages, then measuring...\n");
+    printf("\nTest 2: Channel page timings after dc civac (no eviction)\n");
+    printf("Flushing 256 channel pages, then measuring\n");
     {
         // Flush all channel pages
         for (int i = 0; i < 256; i++)
             clflush((void *)((char *)channel + i * PAGE_SZ));
-            
+
         asm volatile("dsb ish");
         asm volatile("isb");
 
@@ -153,7 +153,7 @@ int main()
     }
 
     // Test 3: Full channel after dc civac + 48 MB eviction
-    printf("\n--- Test 3: Channel page timings after dc civac + 48MB eviction ---\n");
+    printf("\nTest 3: Channel page timings after dc civac + 48MB eviction\n");
     {
         // Flush all channel pages
         for (int i = 0; i < 256; i++)
@@ -196,7 +196,7 @@ int main()
     }
 
     // Test 4: L1 hit baseline (for comparison)
-    printf("\n--- Test 4: L1 hit baseline ---\n");
+    printf("\nTest 4: L1 hit baseline\n");
     {
         (void)(*(volatile char *)test_page); // warm into L1
         asm volatile("dsb ish");
