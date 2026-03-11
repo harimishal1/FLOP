@@ -1,0 +1,20 @@
+# Build artifacts
+*.o
+*.dSYM/
+re/load-loop-timing
+re/mispredict
+re/oob-read
+re/aliasing
+re/cross-process
+re/rogue-function
+re/attack-diag
+re/slc-diag
+
+# macOS
+.DS_Store
+__MACOSX/
+
+# Editor
+*.swp
+*.swo
+*~
