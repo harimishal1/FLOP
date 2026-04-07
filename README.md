@@ -1,6 +1,6 @@
 # Modified Artifacts for FLOP: False Load Output Prediction Attacks on the Apple M3Max CPU
 
-The original paper can be found at Zenmodo or various Usenix websites. My work has modified and extended the original. 
+The original paper can be found at Zenmodo or Usenix websites. My work has modified and extended the original. 
 
 This repository contains the modified C code artifacts for the paper "FLOP: False Load Output Prediction Attacks on the Apple M3 CPU".:
 
